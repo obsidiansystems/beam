@@ -924,7 +924,7 @@ instance ( Generic (sub f)
          , GDefaultTableFieldSettings (Rep (sub f) ()) ) =>
          SubTableStrategyImpl 'BeamableStrategy f sub where
   namedSubTable _ = to' $ gDefTblFieldSettings (Proxy @(Rep (sub f) ()))
-instance ( CheckNullable f, SubTableStrategyImpl 'PrimaryKeyStrategy f (PrimaryKey rel) ) =>
+instance ( SubTableStrategyImpl 'PrimaryKeyStrategy f (PrimaryKey rel) ) =>
          SubTableStrategyImpl 'RecursiveKeyStrategy f (PrimaryKey rel) where
   namedSubTable _ = namedSubTable (Proxy @'PrimaryKeyStrategy)
 
