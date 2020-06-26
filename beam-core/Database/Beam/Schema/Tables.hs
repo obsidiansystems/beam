@@ -245,12 +245,12 @@ fieldNamed newName = FieldModification (fieldName .~ newName)
 newtype FieldRenamer entity = FieldRenamer { withFieldRenamer :: entity -> entity }
 
 class RenamableField f where
-  renameField :: Proxy f -> Proxy a -> (NE.NonEmpty Text -> Text) -> Columnar f a -> Columnar f a
+  renameField :: Proxy f -> Proxy a -> (NE.NonEmpty Text -> Text -> Text) -> Columnar f a -> Columnar f a
 instance RenamableField (TableField tbl) where
-  renameField _ _ f (TableField path _) = TableField path (f path)
+  renameField _ _ f (TableField path oldname) = TableField path (f path oldname)
 
 class RenamableWithRule mod where
-  renamingFields :: (NE.NonEmpty Text -> Text) -> mod
+  renamingFields :: (NE.NonEmpty Text -> Text -> Text) -> mod
 instance Database be db => RenamableWithRule (db (EntityModification (DatabaseEntity be db) be)) where
   renamingFields renamer =
     runIdentity $
