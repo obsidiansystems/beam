@@ -1232,8 +1232,8 @@ instance HasSqlValueSyntax PgValueSyntax BL.ByteString where
 instance Pg.ToField a => HasSqlValueSyntax PgValueSyntax (V.Vector a) where
   sqlValueSyntax = defaultPgValueSyntax
 
-instance TypeError (PreferExplicitSize Int Int32) => HasSqlValueSyntax PgValueSyntax Int where
-  sqlValueSyntax = defaultPgValueSyntax
+-- instance TypeError (PreferExplicitSize Int Int32) => HasSqlValueSyntax PgValueSyntax Int where
+  -- sqlValueSyntax = defaultPgValueSyntax
 
 instance TypeError (PreferExplicitSize Word Word32) => HasSqlValueSyntax PgValueSyntax Word where
   sqlValueSyntax = defaultPgValueSyntax

@@ -106,8 +106,8 @@ instance FromBackendRow Postgres Int32 where
 instance FromBackendRow Postgres Int64 where
   fromBackendRow = fromPgIntegral
 
-instance TypeError (PreferExplicitSize Int Int32) => FromBackendRow Postgres Int where
-  fromBackendRow = fromPgIntegral
+-- instance TypeError (PreferExplicitSize Int Int32) => FromBackendRow Postgres Int where
+--   fromBackendRow = fromPgIntegral
 
 -- Word values are serialized as SQL @NUMBER@ types to guarantee full domain coverage.
 -- However, we want them te be serialized/deserialized as whichever type makes sense
@@ -118,8 +118,8 @@ instance FromBackendRow Postgres Word32 where
 instance FromBackendRow Postgres Word64 where
   fromBackendRow = fromPgScientificOrIntegral
 
-instance TypeError (PreferExplicitSize Word Word32) => FromBackendRow Postgres Word where
-  fromBackendRow = fromPgScientificOrIntegral
+-- instance TypeError (PreferExplicitSize Word Word32) => FromBackendRow Postgres Word where
+--   fromBackendRow = fromPgScientificOrIntegral
 
 instance FromBackendRow Postgres Integer
 instance FromBackendRow Postgres ByteString
@@ -259,8 +259,8 @@ PG_HAS_EQUALITY_CHECK(Vector a)
 PG_HAS_EQUALITY_CHECK(CI Text)
 PG_HAS_EQUALITY_CHECK(CI TL.Text)
 
-instance TypeError (PreferExplicitSize Int Int32) => HasSqlEqualityCheck Postgres Int
-instance TypeError (PreferExplicitSize Int Int32) => HasSqlQuantifiedEqualityCheck Postgres Int
+-- instance TypeError (PreferExplicitSize Int Int32) => HasSqlEqualityCheck Postgres Int
+-- instance TypeError (PreferExplicitSize Int Int32) => HasSqlQuantifiedEqualityCheck Postgres Int
 instance TypeError (PreferExplicitSize Word Word32) => HasSqlEqualityCheck Postgres Word
 instance TypeError (PreferExplicitSize Word Word32) => HasSqlQuantifiedEqualityCheck Postgres Word
 
