@@ -19,6 +19,7 @@ import Data.Maybe
 import Data.Proxy
 import Data.Text (Text)
 import Data.String
+import Data.List.NonEmpty (NonEmpty)
 
 import GHC.Types
 import GHC.Generics
@@ -53,7 +54,7 @@ class IsDatabaseEntity be entity => IsCheckedDatabaseEntity be entity where
   -- | Like 'dbEntityAuto' but for checked databases. Most often, this wraps
   -- 'dbEntityAuto' and provides some means to generate 'DatabasePredicate's
   checkedDbEntityAuto :: CheckedDatabaseEntityDefaultRequirements be entity
-                      => Text -> CheckedDatabaseEntityDescriptor be entity
+                      => NonEmpty Text -> CheckedDatabaseEntityDescriptor be entity
 
 -- | Like 'DatabaseEntity' but for checked databases
 data CheckedDatabaseEntity be (db :: (* -> *) -> *) entityType where

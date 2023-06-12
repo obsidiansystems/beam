@@ -126,9 +126,9 @@ getFields res = do
   Pg.Col colCount <- Pg.nfields res
 
   let getField col =
-        PgI.resultToField res (Pg.Col col)
+        Pg.Field res (Pg.Col col) <$> Pg.ftype res (Pg.Col col)
 
-  return $ map getField [0..colCount - 1]
+  mapM getField [0..colCount - 1]
 
 runPgRowReader ::
   Pg.Connection -> Pg.Row -> Pg.Result -> [Pg.Field] -> FromBackendRowM Postgres a -> IO (Either BeamRowReadError a)
@@ -143,7 +143,7 @@ runPgRowReader conn rowIdx res fields (FromBackendRowM readRow) =
     step (ParseOneField _) curCol colCount _
       | curCol >= colCount = pure (Left (BeamRowReadError (Just (fromIntegral curCol)) (ColumnNotEnoughColumns (fromIntegral colCount))))
     step (ParseOneField (next' :: next -> _)) curCol colCount (field:remainingFields) =
-      do fieldValue <- Pg.getvalue' res rowIdx (Pg.Col curCol)
+      do fieldValue <- Pg.getvalue res rowIdx (Pg.Col curCol)
          res' <- Pg.runConversion (Pg.fromField field fieldValue) conn
          case res' of
            Pg.Errors errs ->
@@ -289,12 +289,7 @@ data PgF next where
         FromBackendRow Postgres x =>
         (Maybe x -> next) -> PgF next
     PgLiftWithHandle :: ((String -> IO ()) -> Pg.Connection -> IO a) -> (a -> next) -> PgF next
-instance Functor PgF where
-  fmap f = \case
-    PgLiftIO io n -> PgLiftIO io $ f . n
-    PgRunReturning mode cmd consume n -> PgRunReturning mode cmd consume $ f . n
-    PgFetchNext n -> PgFetchNext $ f . n
-    PgLiftWithHandle withConn n -> PgLiftWithHandle withConn $ f . n
+deriving instance Functor PgF
 
 -- | How to fetch results.
 data FetchMode
@@ -353,9 +348,6 @@ instance MonadBeam Postgres Pg where
               case a' of
                 Nothing -> pure (Just x)
                 Just _ -> pure Nothing
-
-    runReturningFirst cmd =
-        liftF (PgRunReturning AtOnce cmd id id)
 
     runReturningList cmd =
         liftF (PgRunReturning AtOnce cmd consume id)

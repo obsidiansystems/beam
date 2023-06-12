@@ -100,6 +100,7 @@ import           Control.Monad.Free.Church
 import           Data.Aeson (Value, object, (.=))
 import           Data.Bits
 import           Data.ByteString (ByteString)
+import qualified Data.ByteString.Base16 as Base16
 import           Data.ByteString.Builder (Builder, byteString, char8, toLazyByteString)
 import qualified Data.ByteString.Char8 as B
 import           Data.ByteString.Lazy.Char8 (toStrict)
@@ -232,6 +233,9 @@ data PgCommandSyntax
     = PgCommandSyntax
     { pgCommandType :: PgCommandType
     , fromPgCommand :: PgSyntax }
+
+instance Sql92DisplaySyntax PgCommandSyntax where
+  displaySyntax = displaySyntax . fromPgCommand
 
 -- | 'IsSql92SelectSyntax' for Postgres
 newtype PgSelectSyntax = PgSelectSyntax { fromPgSelect :: PgSyntax }
@@ -1417,7 +1421,7 @@ pgRenderSyntaxScript (PgSyntax mkQuery) =
     step (EscapeIdentifier b next) = escapePgIdentifier b <> next
 
     escapePgString b = byteString (B.concatMap (\w -> if w == '\'' then "''" else B.singleton w) b)
-    escapePgBytea _ = error "escapePgBytea: no connection"
+    escapePgBytea b = byteString "\\x" <> byteString (Base16.encode b)
     escapePgIdentifier bs = char8 '"' <> foldMap quoteIdentifierChar (B.unpack bs) <> char8 '"'
       where
         quoteIdentifierChar '"' = char8 '"' <> char8 '"'
