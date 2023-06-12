@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -14,6 +15,8 @@ module Database.Beam.Postgres.Types
   , fromPgIntegral
   , fromPgScientificOrIntegral
   ) where
+
+#include "MachDeps.h"
 
 import           Database.Beam
 import           Database.Beam.Backend

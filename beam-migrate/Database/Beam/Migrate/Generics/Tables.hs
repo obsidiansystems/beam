@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -11,6 +12,8 @@ module Database.Beam.Migrate.Generics.Tables
 
   , HasNullableConstraint, NullableStatus
   ) where
+
+#include "MachDeps.h"
 
 import Database.Beam
 import Database.Beam.Backend.Internal.Compat
