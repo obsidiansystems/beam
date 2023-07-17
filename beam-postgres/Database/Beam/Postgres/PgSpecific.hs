@@ -9,6 +9,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE CPP #-}
 
 -- | Postgres-specific types, functions, and operators
@@ -445,6 +446,8 @@ data PgBoundType
   deriving (Show, Generic)
 instance Hashable PgBoundType
 
+deriving instance Eq PgBoundType
+
 lBound :: PgBoundType -> ByteString
 lBound Inclusive = "["
 lBound Exclusive = "("
@@ -475,6 +478,9 @@ data PgRange (n :: *) a
   = PgEmptyRange
   | PgRange (PgRangeBound a) (PgRangeBound a)
   deriving (Show, Generic)
+
+deriving instance Eq a => Eq (PgRangeBound a)
+deriving instance Eq a => Eq (PgRange n a)
 
 instance Hashable a => Hashable (PgRangeBound a)
 

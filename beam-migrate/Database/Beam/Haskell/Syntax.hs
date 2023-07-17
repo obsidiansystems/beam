@@ -1038,5 +1038,5 @@ instance Hashable (Hs.CName ())
 instance Hashable (Hs.DerivStrategy ())
 instance Hashable (Hs.MaybePromotedName ())
 #endif
-instance Hashable a => Hashable (S.Set a) where
-  hashWithSalt s a = hashWithSalt s (S.toList a)
+--instance Hashable a => Hashable (S.Set a) where
+--  hashWithSalt s a = hashWithSalt s (S.toList a)
