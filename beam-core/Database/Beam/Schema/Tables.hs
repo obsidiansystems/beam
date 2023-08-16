@@ -414,16 +414,6 @@ instance ( Selector f, IsDatabaseEntity be x, DatabaseEntityDefaultRequirements 
   GAutoDbSettings (S1 f (K1 Generic.R (DatabaseEntity be db x)) p) where
   autoDbSettings' = M1 (K1 (DatabaseEntity (dbEntityAuto (name :| []))))
     where name = T.pack (selName (undefined :: S1 f (K1 Generic.R (DatabaseEntity be db x)) p))
-instance ( Database be embedded
-         , Generic (DatabaseSettings be embedded)
-         , GAutoDbSettings (Rep (DatabaseSettings be embedded) ()) ) =>
-    GAutoDbSettings (S1 f (K1 Generic.R (embedded (DatabaseEntity be super))) p) where
-  autoDbSettings' =
-    M1 . K1 . runIdentity $
-    zipTables (Proxy @be)
-              (\(DatabaseEntity x) _ -> pure (DatabaseEntity x))
-              db db
-    where db = defaultDbSettings @be
 
 instance ( Selector f
          , Generic (DatabaseSettings be innerDb)
@@ -464,12 +454,6 @@ instance (IsDatabaseEntity be tbl, DatabaseEntityRegularRequirements be tbl) =>
 
   gZipDatabase _ combine ~(K1 x) ~(K1 y) =
     K1 <$> combine x y
-instance Database be db =>
-    GZipDatabase be f g h (K1 Generic.R (db f)) (K1 Generic.R (db g)) (K1 Generic.R (db h)) where
-
-  gZipDatabase _ combine ~(K1 x) ~(K1 y) =
-      K1 <$> zipTables (Proxy @be) combine x y
-
 instance Database be db =>
   GZipDatabase be f g h (K1 Generic.R (db f)) (K1 Generic.R (db g)) (K1 Generic.R (db h)) where
 

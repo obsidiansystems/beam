@@ -345,8 +345,8 @@ embeddedDatabases :: TestTree
 embeddedDatabases =
     testGroup "Embedded databases"
       [ testCase "Databases can be embedded" $ do
-          view (dbEntityDescriptor . dbEntityName) (_vdbVehiculesA (_embedVehicleDb superDbSettingsDefault)) @?= "vehicules_a"
-          view (dbEntityDescriptor . dbEntityName) (_vdbVehiculesB (_embedVehicleDb superDbSettingsDefault)) @?= "vehicules_b"
+          view (dbEntityDescriptor . dbEntityName) (_vdbVehiculesA (_embedVehicleDb superDbSettingsDefault)) @?= "vehicle_db__vehicules_a"
+          view (dbEntityDescriptor . dbEntityName) (_vdbVehiculesB (_embedVehicleDb superDbSettingsDefault)) @?= "vehicle_db__vehicules_b"
       , testCase "Databases can be customized when embedded" $ do
           view (dbEntityDescriptor . dbEntityName) (_vdbVehiculesA (_embedVehicleDb superDbSettingsCustom)) @?= "something_random"
       ]
