@@ -1,5 +1,5 @@
 name:                beam-migrate
-version:             0.5.2.0
+version:             0.5.2.1
 synopsis:            SQL DDL support and migrations support library for Beam
 description:         This package provides type classes to allow backends to implement
                      SQL DDL support for beam. This allows you to use beam syntax to
@@ -64,18 +64,18 @@ library
                        text                 >=1.2     && <2.1,
                        aeson                >=0.11    && <2.2,
                        bytestring           >=0.10    && <0.12,
-                       free                 >=4.12    && <5.2,
+                       free                 >=4.12    && <5.3,
                        time                 >=1.6     && <1.13,
-                       mtl                  >=2.2     && <2.3,
+                       mtl                  >=2.2     && <2.4,
                        scientific           >=0.3     && <0.4,
-                       vector               >=0.11    && <0.13,
+                       vector               >=0.11    && <0.14,
                        containers           >=0.5     && <0.7,
                        unordered-containers >=0.2     && <0.3,
                        hashable             >=1.2     && <1.5,
                        microlens            >=0.4     && <0.5,
                        parallel             >=3.2     && <3.3,
                        deepseq              >=1.4     && <1.5,
-                       ghc-prim             >=0.5     && <0.10,
+                       ghc-prim             >=0.5     && <0.11,
                        containers           >=0.5     && <0.7,
                        haskell-src-exts     >=1.18    && <1.24,
                        pretty               >=1.1     && <1.2,

@@ -1,3 +1,21 @@
+# 0.10.1.0
+
+# Added features
+
+ * Allow embedding database types
+ * Loosen some version bounds
+
+# 0.10.0.0
+
+# Bug fixes
+
+ * Make sure lateral join names do not overlap
+
+# Addded features
+
+ * Add `runSelectReturningFirst`
+ * `IN (SELECT ...)` syntax via `inQuery_`
+
 # 0.9.2.1
 
 ## Added features

@@ -1,3 +1,20 @@
+# 0.5.3.0
+
+# Added features
+
+ * Loosen some version bounds
+ * `HasSqlEqualityCheck` instance for `Day`
+
+# 0.5.2.0
+
+# Bug fixes
+
+ * Fix encoding for `UTCTime`
+
+# Addded features
+
+ * `IN (SELECT ...)` syntax via `inQuery_`
+
 # 0.5.1.2
 
 ## Added features

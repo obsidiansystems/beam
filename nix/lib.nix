@@ -4,63 +4,39 @@ rec {
   beamPackageNames = ghc: [
     "beam-core"
     "beam-migrate"
-    "beam-postgres"
     "beam-sqlite"
-  ] ++ lib.optionals (ghc.ghc.version != "8.6.5") [
-    # For unclear reasons, this fails to build on 8.6.5 with missing dynamic
-    # libraries. It's probably somehow related to it being a binary GHC
-    # distribution as opposed to built normally with nix.
+  ] ++ lib.optionals (builtins.compareVersions ghc.ghc.version "9.4" < 0) [
+    # hint doesn't yet support 9.4+
     "beam-migrate-cli"
+  ] ++ lib.optionals (builtins.compareVersions ghc.ghc.version "9.6" < 0) [
+    # postgres-options doesn't yet support 9.6+
+    "beam-postgres"
   ];
   ghcVersions = {
-    ghc865 = haskell.packages.ghc865Binary.extend (composeExtensionList [
-      (_: super: {
-       # Similar weird library issue as with beam-migrate-cli:
-        constraints-extras = haskell.lib.disableCabalFlag
-          super.constraints-extras
-          "build-readme";
-      })
-      (applyToPackages haskell.lib.doJailbreak [
-        "mono-traversable"
-      ])
-    ]);
-    inherit (haskell.packages) ghc884;
-    inherit (haskell.packages) ghc8107;
-    ghc901 = haskell.packages.ghc901.extend (composeExtensionList [
-      (applyToPackages haskell.lib.doJailbreak [
-        "pqueue"
-      ])
-    ]);
-    ghc921 = haskell.packages.ghc921.extend (composeExtensionList [
-      (applyToPackages haskell.lib.doJailbreak [
-        "postgresql-libpq"
-        "postgresql-simple"
-        "pqueue"
-      ])
-      (pinHackageVersions {
-        "some" = "1.0.3";
-        # This is not needed, but it tests the version bounds:
-        "vector-sized" = "1.5.0";
-      })
-      (pinHackageDirectVersions {
-        constraints-extras = {
-          pkg = "constraints-extras";
-          ver = "0.3.2.1";
-          sha256 = "03hsja50vzflqqmvvxgc9w32dqg51dlw8i0blpqb2ipv7njx4q2q";
-        };
-        hint = {
-          pkg = "hint";
-          ver = "0.9.0.5";
-          sha256 = "0x3yyq4vdpz4rqymbrq70swjpi0k6bnja0vhwlpgbgpzdb3ij7vc";
-        };
-      })
+    inherit (haskell.packages) ghc88;
+    inherit (haskell.packages) ghc810;
+    inherit (haskell.packages) ghc90;
+    inherit (haskell.packages) ghc92;
+    ghc94 = haskell.packages.ghc94.extend (composeExtensionList [
       (self: _: {
-        # This is not needed, but it tests the version bounds:
-        aeson = self.aeson_2_0_1_0;
+        postgresql-simple = self.postgresql-simple_0_6_5;
+
+        # These are just to test upper bounds:
+        free = self.free_5_2;
+        # Currently doctests for vector 0.13.0.0 fail.
+        vector = haskell.lib.dontCheck self.vector_0_13_0_0;
+        vector-algorithms = self.vector-algorithms_0_9_0_1;
       })
+    ]);
+    ghc96 = haskell.packages.ghc96.extend (composeExtensionList [
+      (applyToPackages haskell.lib.doJailbreak [
+        "pqueue"
+      ])
     ]);
   };
 
+  # Currently unused as we don't need any overrides with current nixpkgs
+  # and GHC versions.
   composeExtensionList = lib.foldr lib.composeExtensions (_: _: {});
   applyToPackages = f: packages: _: super: lib.genAttrs packages
     (name: f super."${name}");

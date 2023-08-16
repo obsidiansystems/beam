@@ -49,7 +49,7 @@ import           Control.Monad.Writer
 import           Control.Monad.State
 
 import qualified Data.HashSet as HS
-import           Data.Semigroup (Max(..))
+import           Data.Semigroup (Max(..), Any(..))
 import           Data.Typeable
 import           Data.Functor
 import qualified Data.Text as T
