@@ -18,12 +18,13 @@ module Database.Beam.Postgres.PgSpecific
     -- $full-text-search
 
     -- *** @TSVECTOR@ data type
-    TsVectorConfig, TsVector(..)
-  , toTsVector, english
+    TsVectorConfig(..), TsVector(..)
+  , toTsVector, english, tsVectorAppend
 
     -- *** @TSQUERY@ data type
   , TsQuery(..), (@@)
-  , toTsQuery
+  , tsQueryOr, tsQueryAnd, tsQueryNot, tsQueryContains
+  , toTsQuery, plainToTsQuery, phraseToTsQuery, websearchToTsQuery
 
     -- ** @JSON@ and @JSONB@ data types
     -- $json
@@ -71,7 +72,7 @@ module Database.Beam.Postgres.PgSpecific
 
     -- ** @ARRAY@ types
     -- $arrays
-  , PgArrayValueContext, PgIsArrayContext
+  , PgArrayValueContext, PgIsArrayContext(..)
 
     -- *** Building @ARRAY@s
   , array_, arrayOf_, (++.)
@@ -235,6 +236,10 @@ toTsVector (Just (TsVectorConfig configNm)) (QExpr x) =
 QExpr vec @@ QExpr q =
   QExpr (pgBinOp "@@" <$> vec <*> q)
 
+-- | The postgres || (concatenation) operator on 'TsVector'.
+tsVectorAppend :: QGenExpr context Postgres s TsVector -> QGenExpr context Postgres s TsVector -> QGenExpr context Postgres s TsVector
+tsVectorAppend (QExpr v) (QExpr v') = QExpr (pgBinOp "||" <$> v <*> v')
+
 -- ** TsQuery type
 
 -- | A query that can be run against a document contained in a 'TsVector'.
@@ -257,18 +262,76 @@ instance Pg.FromField TsQuery where
 
 instance FromBackendRow Postgres TsQuery
 
+-- | The postgres || (disjunction) operator on 'TsQuery'.
+tsQueryOr :: QGenExpr context Postgres s TsQuery -> QGenExpr context Postgres s TsQuery -> QGenExpr context Postgres s TsQuery
+tsQueryOr (QExpr v) (QExpr v') = QExpr (pgBinOp "||" <$> v <*> v')
+
+-- | The postgres && (conjunction) operator on 'TsQuery'.
+tsQueryAnd :: QGenExpr context Postgres s TsQuery -> QGenExpr context Postgres s TsQuery -> QGenExpr context Postgres s TsQuery
+tsQueryAnd (QExpr v) (QExpr v') = QExpr (pgBinOp "&&" <$> v <*> v')
+
+-- | The postgres !! (negation) operator on 'TsQuery'.
+tsQueryNot :: QGenExpr context Postgres s TsQuery -> QGenExpr context Postgres s TsQuery
+tsQueryNot (QExpr v) = QExpr (pgUnOp "!!" <$> v)
+
+-- | The postgres <-> (phrase concatenation) operator on 'TsQuery'. Given two queries, produces a query which matches when
+-- the first matches one lexeme, and the second matches its immediate successor.
+tsQueryPhrase :: QGenExpr context Postgres s TsQuery -> QGenExpr context Postgres s TsQuery -> QGenExpr context Postgres s TsQuery
+tsQueryPhrase (QExpr v) (QExpr v') = QExpr (pgBinOp "<->" <$> v <*> v')
+
+-- | The postgres @> (containment) operator on 'TsQuery'. Given two queries, determines whether all the lexemes appearing in the
+-- second query appear in the first.
+tsQueryContains :: QGenExpr context Postgres s TsQuery -> QGenExpr context Postgres s TsQuery -> QGenExpr context Postgres s Bool
+tsQueryContains (QExpr v) (QExpr v') = QExpr (pgBinOp "@>" <$> v <*> v')
+
+mkToTsQuery :: BeamSqlBackendIsString Postgres str
+          => ByteString
+          -> Maybe TsVectorConfig -> QGenExpr context Postgres s str
+          -> QGenExpr context Postgres s TsQuery
+mkToTsQuery name Nothing (QExpr x) =
+  QExpr (fmap (\(PgExpressionSyntax x') ->
+                 PgExpressionSyntax $
+                 emit name <> emit "(" <> x' <> emit ")") x)
+mkToTsQuery name (Just (TsVectorConfig configNm)) (QExpr x) =
+  QExpr (fmap (\(PgExpressionSyntax x') -> PgExpressionSyntax $
+                 emit name <> emit "('" <> escapeString configNm <> emit "', " <> x' <> emit ")") x)
+
 -- | The Postgres @to_tsquery@ function. Given a configuration and string,
 -- return the @TSQUERY@ that represents the contents of the string.
+-- The words must be combined by valid tsquery operators.
 toTsQuery :: BeamSqlBackendIsString Postgres str
           => Maybe TsVectorConfig -> QGenExpr context Postgres s str
           -> QGenExpr context Postgres s TsQuery
-toTsQuery Nothing (QExpr x) =
-  QExpr (fmap (\(PgExpressionSyntax x') ->
-                 PgExpressionSyntax $
-                 emit "to_tsquery(" <> x' <> emit ")") x)
-toTsQuery (Just (TsVectorConfig configNm)) (QExpr x) =
-  QExpr (fmap (\(PgExpressionSyntax x') -> PgExpressionSyntax $
-                 emit "to_tsquery('" <> escapeString configNm <> emit "', " <> x' <> emit ")") x)
+toTsQuery = mkToTsQuery "to_tsquery"
+
+-- | The Postgres @plainto_tsquery@ function. Given a configuration and string,
+-- return the @TSQUERY@ that represents the contents of the string.
+-- Any punctuation in the string is ignored (it does not determine query operators).
+-- The resulting query matches documents containing all non-stopwords in the text.
+plainToTsQuery :: BeamSqlBackendIsString Postgres str
+               => Maybe TsVectorConfig -> QGenExpr context Postgres s str
+               -> QGenExpr context Postgres s TsQuery
+plainToTsQuery = mkToTsQuery "plainto_tsquery"
+
+-- | The Postgres @phraseto_tsquery@ function. Given a configuration and string,
+-- return the @TSQUERY@ that represents the contents of the string.
+-- Any punctuation in the string is ignored (it does not determine query operators).
+-- The resulting query matches phrases containing all non-stopwords in the text.
+phraseToTsQuery :: BeamSqlBackendIsString Postgres str
+                => Maybe TsVectorConfig -> QGenExpr context Postgres s str
+                -> QGenExpr context Postgres s TsQuery
+phraseToTsQuery = mkToTsQuery "phraseto_tsquery"
+
+-- | The Postgres @websearch_to_tsquery@ function. Given a configuration and string,
+-- return the @TSQUERY@ that represents the contents of the string.
+-- Quoted word sequences are converted to phrase tests. The word “or” is understood
+-- as producing an OR operator, and a dash produces a NOT operator; other punctuation
+-- is ignored. This approximates the behavior of some common web search tools.
+websearchToTsQuery :: BeamSqlBackendIsString Postgres str
+                   => Maybe TsVectorConfig -> QGenExpr context Postgres s str
+                   -> QGenExpr context Postgres s TsQuery
+websearchToTsQuery = mkToTsQuery "websearch_to_tsquery"
+
 
 -- ** Array operators
 
